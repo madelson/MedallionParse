@@ -31,6 +31,14 @@ namespace Medallion.Parse
                 throw new ArgumentException(value, paramName);
             }
         }
+
+        public static void IfContainsNull<T>(IEnumerable<T> value, string paramName)
+        {
+            if (value.Any(t => t == null))
+            {
+                throw new ArgumentNullException(paramName, "must not contain nulls");
+            }
+        }
     }
 
     internal static class Helpers

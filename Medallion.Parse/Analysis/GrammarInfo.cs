@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Parse
+namespace Medallion.Parse.Analysis
 {
     internal sealed class GrammarInfo
     {

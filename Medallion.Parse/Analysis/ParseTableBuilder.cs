@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Parse
+namespace Medallion.Parse.Analysis
 {
     /// <summary>
     /// Contructs the LL(1) parse table for a grammar

@@ -11,13 +11,36 @@
 	This is done starting with the lowest precedence left-recursive rule.
 	The same logic can be applied to all (tail?) recursive rules as well to prevent precedence violation (e. g. EXP -> - EXP)
 
+* back-tracking: we need to backtrack whenever we aren't LL(1). Basically, each node in the parse-tree can compute a count of the way it can parse. The count
+is naively determined by the following:
+- for each production, for each symbol, multiply by 1 for tokens and by N for nonTerminals (where N is the count for those nodes). Thus, a simple node will have a count
+of one
+- when calling parse, we check the node count and start calling from 0. When the node returns, we either get error (exhausted) or an index of which iteration we matched on
+to be used when calling again (so we might call with 0 and get back 3, for example)
+
 * special productions like list, option, oneOf, tuple don't parse "normally" (e. g. are inlined)
+
+* TRIVIA:
+	* this is a concept from roslyn to represent things like whitespace and comments. Here's how we can handle it:
+	* grammars can define a set of trivia symbols: these symbols may not appear in production rules. When the parser encounters trivia, it loads them onto it's trivia stack. When a non-trivia symbol is found, we attach leading and trailing trivia to it.
+	We can use newline to decide how to break trailing from leading (so a trailing // ccc) on the same line attaches to the previous token, for example. This can all be handled at the very low stream level, and thus should be very cheap.
+	* Additionally, grammars can define a trivia grammar to parse within trivia. This can further define trivia as well. This allows you to
+	define a sub-grammar for things like doc comments or template language strings/comments (think Razor). 
+	To support that scenario we'd likely need to allow non-trivia to parse to trivia. For example, imagine you have the string.Format templating language. You'd have:
+	Tokens: LBRACE, RBRACE, NUM, COLON, OTHER (sequence of other chars)
+	Grammar: ESCAPE -> LBRACE LBRACE | RBRACE RBRACE (left-associative)
+		TEXT -> OTHER | ESCAPE | NONE | COLON
+		FORMAT -> LBRACE NUM option<COLON list<TEXT>> RBRACE
+		TRIVIA -> TEXT (alt. here we could just do prog -> list<choice<TEXT, FORMAT>>)
+		start: list<FORMAT>
 
 * recursion:
 	example: EXP -> ( EXP
 		EXP -> ( EXP )
 	this is addressed by left-factoring: EXP -> ( EXP option<)>
 
+* Symbol type/Production numbering: things are more efficient when we can number everything 0..N for the full grammar. Before building the parser, we can simply
+re-create numbered versions of everything!
 
 * Wyvern stuff
 
@@ -34,4 +57,4 @@
 
 	this is where greedy parsing hurts! We basically need the ability to try the option parse in different ways 
 	(e. g. call with 0, then with 1) -> this happens all the way down! Claim: in this case, we'll see an LL(1) parse
-	table failure
+	table failure. 

@@ -8,6 +8,14 @@ namespace Medallion.Parse
 {
     internal enum GeneratedSymbolType : byte
     {
+        OptionChoice,
+        Tuple,
+        List,
+
+        Eof,
+        Error,
+        Unrecognized,
+
         Prefix,
     }
 
