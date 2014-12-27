@@ -1,0 +1,37 @@
+﻿* Fundamental goal: should be possible to create a parser which can efficiently parse (most) programmer-created programming language grammars.
+
+* Strategy: use recursive descent predictive parsing, but incorporating "tricks" used in hand-written parsers
+	- associativity: on-the-way-up transformation (e. g. if we parse a rule exp -> exp + exp and we notice that the right side is the same rule (e. g. we have a + (b + c), rewrite as (a + b) + c))
+	this rewrite will need to ignore renames (e. g. exp -> binop) -> could be implemented by outing/stack tracking the rule# used for the parse, ignoring/passing through rename rules
+	- left factoring: takes A -> a b c and A -> a b d and replaces them with A -> a b SUFFIX, SUFFIX -> c, SUFFIX -> d, which can be resolved without extended lookahead
+	- rename collapse: takes rules like EXP -> BINOP and collapses them to remove BINOP (essentially inlines it)
+	- left recursion: for left-recursive rules like EXP -> EXP + EXP, we can replace with:
+		EXP -> EXP' option<(+ EXP)> (should the second one be EXP'?)
+		EXP' -> [all rules for EXP exception EXP -> EXP + EXP]
+	This is done starting with the lowest precedence left-recursive rule.
+	The same logic can be applied to all (tail?) recursive rules as well to prevent precedence violation (e. g. EXP -> - EXP)
+
+* special productions like list, option, oneOf, tuple don't parse "normally" (e. g. are inlined)
+
+* recursion:
+	example: EXP -> ( EXP
+		EXP -> ( EXP )
+	this is addressed by left-factoring: EXP -> ( EXP option<)>
+
+
+* Wyvern stuff
+
+** hard parse task: attributes on expressions (e. g. yield a;), where a is an expression. We expect the grammar to look something like:
+	exp -> name
+	exp -> option<attrList> exp
+	attrList -> name option<attrList>
+	(option is always defined by option -> T, option -> eps)
+
+	even simpler is:
+	exp -> name
+	exp -> option<attr> exp
+	attr -> name
+
+	this is where greedy parsing hurts! We basically need the ability to try the option parse in different ways 
+	(e. g. call with 0, then with 1) -> this happens all the way down! Claim: in this case, we'll see an LL(1) parse
+	table failure
